@@ -14,22 +14,29 @@
  (syntax-rules ()
   ((null-tree? x) (null? x))))
 
+;`cons' of stream
 (define-syntax stream-cons
  (syntax-rules ()
   ((stream-cons a b) (cons a (lambda () b)))))
+;`car' of stream
 (define-syntax stream-car
  (syntax-rules ()
   ((stream-car x) (car x))))
+;`cdr' of stream
 (define-syntax stream-cdr
  (syntax-rules ()
   ((stream-cdr x) ((cdr x)))))
+;return an empty stream
 (define-syntax make-empty-stream
  (syntax-rules ()
   ((make-empty-stream) '())))
+;test whether a stream is null or not
 (define-syntax null-stream?
  (syntax-rules ()
   ((null-stream? x) (null? x))))
 
+;Just like `filter', except that the object is not a list, it is a stream
+;And, the function return a stream
 (define (filter-stream choose? stream)
   (if (null-stream? stream)
       stream
@@ -38,21 +45,33 @@
             (stream-cons x (filter-stream choose? (stream-cdr stream)))
             (filter-stream choose? (stream-cdr stream))))))
 
+;Transform from list to stream
 (define (list->stream lst)
   (if (null? lst)
       (make-empty-stream)
       (stream-cons (car lst) (list->stream (cdr lst)))))
 
+;Transform stream list to list
 (define (stream->list stream)
   (if (null-stream? stream)
       '()
       (cons (stream-car stream) (stream->list (stream-cdr stream)))))
 
+;Just like `fold-left', except that the object is not a list, it is a stream
 (define (fold-stream f init stream)
   (if (null-stream? stream)
       init
       (fold-stream f (f (stream-car stream) init) (stream-cdr stream))))
 
+(define (fold-stream-return f init stat next-stat end? stream)
+ (cond
+  ((null-stream? stream) init)
+  ((end? stat) init)
+  (else
+   (let ((x (stream-car stream)))
+    (fold-stream-return f (f x init) (next-stat x stat) next-stat end? (stream-cdr stream))))))
+
+;Just like `for-each', except that the object is not a list, it is a stream
 (define (for-each-stream f stream)
   (if (null-stream? stream)
       (void)
@@ -60,6 +79,17 @@
         (f (stream-car stream))
         (for-each-stream f (stream-cdr stream)))))
 
+(define (for-each-stream-return f stat next-stat end? stream)
+ (cond
+  ((null-stream? stream) (void))
+  ((end? stat) (void))
+  (else
+   (begin
+    (f (stream-car stream))
+    (for-each-stream-return f (next-stat (stream-car stream) stat) next-stat end? (stream-cdr stream))))))
+
+;Just like `map', except that the objects are not lists, they are streams
+;And, the function return a stream
 (define (map-stream f . streams)
   (define (stream-cars streams)
     (if (null? streams)
@@ -75,6 +105,8 @@
        (apply f (stream-cars streams))
        (apply map-stream f (stream-cdrs streams)))))
 
+;Just like `append', except that the objects are not lists, they are streams
+;And, the function return a stream
 (define (append-stream . streams)
   (cond
     ((null? streams) (make-empty-stream))
@@ -84,22 +116,7 @@
       (stream-car (car streams))
       (apply append-stream (stream-cdr (car streams)) (cdr streams))))))
 
-(define range-stream
-  (lambda s
-    (define (range3 start end step)
-      (cond
-        ((and (>= start end) (> step 0)) (make-empty-stream))
-        ((and (<= start end) (< step 0)) (make-empty-stream))
-        (else (stream-cons start (range3 (+ start step) end step)))))
-    (define (range2 start end)
-      (range3 start end 1))
-    (define (range1 end)
-      (range3 0 end 1))
-    (cond
-      ((null? (cdr s)) (range1 (car s)))
-      ((null? (cddr s)) (range2 (car s) (cadr s)))
-      (else (range3 (car s) (cadr s) (caddr s))))))
-
+;Return a stream of the Cartesian product of several lists
 (define (cart-product-stream . lists)
   (define (next s)
     (cond
@@ -133,6 +150,7 @@
 ;  (make-empty-stream)
 ;  (append-stream (list->stream (stream-car stream)) (flat-stream (stream-cdr stream)))))
 
+;If a stream is made up of lists, this function splits each list and assembles them into a new stream
 (define (flat-stream stream)
  (if (null-stream? stream)
   (make-empty-stream)
@@ -143,6 +161,7 @@
      (car x)
      (flat-stream (stream-cons (cdr x) (stream-cdr stream))))))))
 
+;If a stream is made up of lists or stream, this function splits each list/stream and assembles them into a new stream
 (define (flat-stream-common stream-list/stream-stream)
  (if (null-stream? stream-list/stream-stream)
   (make-empty-stream)
@@ -159,6 +178,7 @@
       (car x)
       (flat-stream-common (stream-cons (cdr x) (stream-cdr stream-list/stream-stream)))))))))
 
+;return a stream of the permutations of a list
 (define (permutation-stream . args)
  (define (sort-int s)
   (define (insert x s)
@@ -189,6 +209,7 @@
    (lambda (s) (map (lambda (x) (list-ref (car args) x)) s))
    (make (- (length (car args)) 1) (cadr args)))))
 
+;return a stream of the combinations of a list
 (define (combination-stream lst n)
  (define (create-first)
   (define (it r remain)
@@ -216,6 +237,7 @@
      (make-empty-stream)))))
  (make (create-first)))
 
+;return a stream of the power set of a list
 (define (power-set-stream lst)
  (if (null? lst)
   (stream-cons '() (make-empty-stream))
@@ -224,8 +246,50 @@
     (lambda (x) (list x (cons (car lst) x)))
     (power-set-stream (cdr lst))))))
 
+;make a stream
+(define (make-stream init next end?)
+ (if (end? init)
+  (make-empty-stream)
+  (stream-cons init (make-stream (next init) next end?))))
+
+;make a stream
+(define (make-stream-v2 init next stat next-stat end?)
+ (if (end? stat)
+  (make-empty-stream)
+  (stream-cons init (make-stream-v2 (next init) next (next-stat stat) next-stat end?))))
+
+;make an infinite stream
 (define (make-inf-stream init next)
  (stream-cons init (make-inf-stream (next init) next)))
+
+;another way to define `make-inf-stream'
+;(define (make-inf-stream init next)
+; (make-stream init next (lambda (x) #f)))
+
+;Return a stream of the range
+(define range-stream
+  (lambda s
+    (define (range3 start end step)
+      (cond
+        ((and (>= start end) (> step 0)) (make-empty-stream))
+        ((and (<= start end) (< step 0)) (make-empty-stream))
+        (else (stream-cons start (range3 (+ start step) end step)))))
+    ;another way to define `range3'
+    ;(define (range3 start end step)
+    ; (let ((end?
+    ;	    (if (> step 0)
+    ;	     (lambda (x) (>= x end))
+    ;	     (lambda (x) (<= x end)))))
+    ; (make-stream start (lambda (x) (+ x step)) end?)))
+    (define (range2 start end)
+      (range3 start end 1))
+    (define (range1 end)
+      (range3 0 end 1))
+    (cond
+      ((null? (cdr s)) (range1 (car s)))
+      ((null? (cddr s)) (range2 (car s) (cadr s)))
+      (else (range3 (car s) (cadr s) (caddr s))))))
+
 
 #|
 (for-each-stream
@@ -269,6 +333,20 @@
  (lambda (x) (display x)(newline))
  (power-set-stream '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)))
 
+(for-each-stream-return
+ (lambda (x) (display x)(newline))
+ 0
+ (lambda (x stat) (+ x stat))
+ (lambda (stat) (> stat 100))
+ (make-inf-stream 1 (lambda (x) (+ x 1))))
+(newline)
 
-
+(display
+ (fold-stream-return
+  (lambda (n r) (+ n r))
+  0
+  1
+  (lambda (x stat) (* x stat))
+  (lambda (stat) (> stat 1000000000000))
+  (make-inf-stream 1 (lambda (x) (+ x 1)))))
 |#
