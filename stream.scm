@@ -263,8 +263,8 @@
  (stream-cons init (make-inf-stream (next init) next)))
 
 ;another way to define `make-inf-stream'
-;(define (make-inf-stream init next)
-; (make-stream init next (lambda (x) #f)))
+(define (make-inf-stream-v2 init next)
+ (make-stream init next (lambda (x) #f)))
 
 ;Return a stream of the range
 (define range-stream
@@ -289,64 +289,3 @@
       ((null? (cdr s)) (range1 (car s)))
       ((null? (cddr s)) (range2 (car s) (cadr s)))
       (else (range3 (car s) (cadr s) (caddr s))))))
-
-
-#|
-(for-each-stream
- (lambda (x) (display x)(newline))
- (flat-stream
-  (map-stream
-   append
-   (make-inf-stream '(1 2 3 4) (lambda (x) (list (+ 12 (car x)) (+ 13 (car x)) (+ 14 (car x)) (+ 15 (car x)))))
-   (make-inf-stream '(5 6 7 8) (lambda (x) (list (+ 12 (car x)) (+ 13 (car x)) (+ 14 (car x)) (+ 15 (car x)))))
-   (make-inf-stream '(9 10 11 12) (lambda (x) (list (+ 12 (car x)) (+ 13 (car x)) (+ 14 (car x)) (+ 15 (car x))))))))
-
-(for-each-stream
- (lambda (x) (display x)(newline))
- (filter-stream even?
-  (flat-stream
-   (filter-stream (lambda (s) (zero? (apply * (map (lambda (x) (remainder x 100)) s))))
-    (map-stream
-     append
-     (make-inf-stream '(1 2 3 4) (lambda (x) (list (+ 12 (car x)) (+ 13 (car x)) (+ 14 (car x)) (+ 15 (car x)))))
-     (filter-stream (lambda (s) (= 5 (remainder (car s) 12)))
-      (make-inf-stream '(5 6 7 8) (lambda (x) (list (+ 4 (car x)) (+ 5 (car x)) (+ 6 (car x)) (+ 7 (car x))))))
-     (make-inf-stream '(9 10 11 12) (lambda (x) (list (+ 12 (car x)) (+ 13 (car x)) (+ 14 (car x)) (+ 15 (car x))))))))))
-
-(for-each-stream
- (lambda (x) (display x)(newline))
- (range-stream 10 1 -2))
-
-(for-each-stream
- (lambda (x) (display x)(newline))
- (cart-product-stream '(1 2 3) '(a b) '(A B C)))
-
-(for-each-stream
- (lambda (x) (display x)(newline))
- (combination-stream '(a b c d e f g) 5))
-
-(for-each-stream
- (lambda (x) (display x)(newline))
- (permutation-stream '(a b c d e f g h i j k l m n o p q r s t u v w x y z) 20))
-
-(for-each-stream
- (lambda (x) (display x)(newline))
- (power-set-stream '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)))
-
-(for-each-stream-return
- (lambda (x) (display x)(newline))
- 0
- (lambda (x stat) (+ x stat))
- (lambda (stat) (> stat 100))
- (make-inf-stream 1 (lambda (x) (+ x 1))))
-(newline)
-
-(display
- (fold-stream-return
-  (lambda (n r) (+ n r))
-  0
-  1
-  (lambda (x stat) (* x stat))
-  (lambda (stat) (> stat 1000000000000))
-  (make-inf-stream 1 (lambda (x) (+ x 1)))))
-|#
