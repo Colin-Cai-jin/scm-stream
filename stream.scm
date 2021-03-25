@@ -364,12 +364,4 @@
    (else (choose (cdr lst) (cdr bool)))))
  (map-stream
   (lambda (bool) (choose lst bool))
-  (apply cart-product-stream (make-list (length lst) '(#t #f))))
-) 
-
-(for-each-stream
- (lambda (x) (display x)(display " "))
-  (power-set-stream-v2 '(a b c d)))
-
-
-
+  (apply cart-product-stream (make-list (length lst) '(#t #f))))) 
