@@ -72,6 +72,7 @@
 (for-each-stream
  (lambda (x) (display x)(display " "))
  (cart-product-stream '(1 2) '(a b)))
+;you can use `cart-product-stream-v2' instead. Maybe the output sequence is not the same
 ;(1 a) (2 a) (1 b) (2 b)
 (newline)
 
@@ -98,30 +99,34 @@
 (for-each-stream
  (lambda (x) (display x)(display " "))
  (permutation-stream '(1 2 3)))
+;you can use `permutation-stream-v2' instead. Maybe the output sequence is not the same
 ;(3 2 1) (2 3 1) (3 1 2) (1 3 2) (2 1 3) (1 2 3)
 (newline)
 
 (for-each-stream
  (lambda (x) (display x)(display " "))
  (permutation-stream '(1 2 3) 2))
+;you can use `permutation-stream-v2' instead. Maybe the output sequence is not the same
 ;(2 1) (3 1) (1 2) (3 2) (1 3) (2 3)
 (newline)
 
 (for-each-stream
  (lambda (x) (display x)(display " "))
  (combination-stream '(1 2 3) 2))
+;you can use `combination-stream-v2' instead. Maybe the output sequence is not the same
 ;(2 3) (1 3) (1 2)
 (newline)
 
 (for-each-stream
  (lambda (x) (display x)(display " "))
  (power-set-stream '(1 2 3)))
+;you can use `power-set-stream-v2' instead. Maybe the output sequence is not the same
 ;() (1) (2) (1 2) (3) (1 3) (2 3) (1 2 3)
 (newline)
 
 (for-each-stream
  (lambda (x) (display x)(display " "))
- (make-stream 1 (lambda (x) (* x 2)) (lambda (x) (> x 100))))
+ (make-stream 1 (lambda (x) (* x 2)) (lambda (stat) (> stat 100))))
 ;1 2 4 8 16 32 64
 (newline)
 
@@ -129,9 +134,9 @@
  (lambda (x) (display x)(display " "))
  (make-stream-v2
   1
-  (lambda (x) (* x 2))
+  (lambda (value stat) (* value 2))
   0
-  (lambda (x) (+ x 1))
-  (lambda (x) (> x 10))))
+  (lambda (value stat) (+ stat 1))
+  (lambda (stat) (> stat 10))))
 ;1 2 4 8 16 32 64 128 256 512 1024
 (newline)

@@ -256,7 +256,7 @@
 (define (make-stream-v2 init next stat next-stat end?)
  (if (end? stat)
   (make-empty-stream)
-  (stream-cons init (make-stream-v2 (next init) next (next-stat stat) next-stat end?))))
+  (stream-cons init (make-stream-v2 (next init stat) next (next-stat init stat) next-stat end?))))
 
 ;make an infinite stream
 (define (make-inf-stream init next)
@@ -289,3 +289,87 @@
       ((null? (cdr s)) (range1 (car s)))
       ((null? (cddr s)) (range2 (car s) (cadr s)))
       (else (range3 (car s) (cadr s) (caddr s))))))
+
+;another way to define `cart-product-stream
+(define (cart-product-stream-v2 . lists)
+ (define (next s)
+  (define (_next now max)
+   (cond
+    ((null? now)#f)
+    ((< (car now) (car max)) (cons (cons (+ (car now) 1) (cdr now)) max))
+    (else
+     (let ((p (_next (cdr now) (cdr max))))
+      (if p
+       (cons (cons 0 (car p)) max)
+       #f)))))
+  (_next (car s) (cdr s)))
+ (map-stream
+  (lambda (s) (map (lambda (x lst) (list-ref lst x)) (car s) lists))
+  (make-stream
+   (cons (map (lambda (x) 0) lists) (map (lambda (lst) (- (length lst) 1)) lists))
+   next
+   not)))
+
+;another way to define `combination-stream'
+(define (combination-stream-v2 lst n)
+ (define (next s)
+  (define (_next now min)
+   (cond
+    ((null? now) #f)
+    ((> (car now) min) (cons (- (car now) 1) (cdr now)))
+    (else
+     (let ((p (_next (cdr now) (+ min 1))))
+      (if p
+       (cons (- (car p) 1) p)
+       #f)))))
+ (_next s 0))
+ (map-stream
+  (lambda (s) (map (lambda (x) (list-ref lst x)) s))
+  (make-stream
+   (let ((len (length lst)))
+    (stream->list (range-stream (- len n) len)))
+   next
+   not)))
+
+;another way to define `combination-stream'
+(define (permutation-stream-v2 . args)
+ (define (next s)
+  (cond
+   ((null? (car s)) #f)
+   ((zero? (caar s))
+    (let ((n (next (cons (cdar s) (cdr s)))))
+     (if n
+      (if (member (cdr s) (car n))
+       (next (cons (cons (cdr s) (car n)) (cdr s)))
+       (cons (cons (cdr s) (car n)) (cdr s)))
+      #f)))
+   ((member (- (caar s) 1) (cdar s)) (next (cons (cons (- (caar s) 1) (cdar s)) (cdr s))))
+   (else (cons (cons (- (caar s) 1) (cdar s)) (cdr s)))))
+ (if (null? (cdr args))
+  (permutation-stream (car args) (length (car args)))
+  (map-stream
+   (lambda (s) (map (lambda (x) (list-ref (car args) x)) (car s)))
+   (make-stream
+    (let ((len (length (car args))))
+     (cons (stream->list (range-stream (- len (cadr args)) len)) (- len 1)))
+    next
+    not))))
+
+;another way to define `power-set-stream'
+(define (power-set-stream-v2 lst)
+ (define (choose lst bool)
+  (cond
+   ((null? lst) '())
+   ((car bool) (cons (car lst) (choose (cdr lst) (cdr bool))))
+   (else (choose (cdr lst) (cdr bool)))))
+ (map-stream
+  (lambda (bool) (choose lst bool))
+  (apply cart-product-stream (make-list (length lst) '(#t #f))))
+) 
+
+(for-each-stream
+ (lambda (x) (display x)(display " "))
+  (power-set-stream-v2 '(a b c d)))
+
+
+
