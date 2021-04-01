@@ -140,3 +140,47 @@
   (lambda (stat) (> stat 10))))
 ;1 2 4 8 16 32 64 128 256 512 1024
 (newline)
+
+;Knapsack
+(define weight-max 100)
+;weight/price
+;Choose the highest total values under `weight-max'
+(define items '((5 . 17) (9 . 33) (8 . 15) (17 . 39) (14 . 35) (25 . 51) (12 . 37) (14 . 29) (11 . 28) (21 . 35) (26 . 47) (18 . 37) (19 . 37) (7 . 24) (9 . 19) (12 . 27) (15 . 42) (16 . 45)))
+(let ((res
+       (fold-stream
+	(lambda (n r)
+	 (if (<= (apply + (map car n)) weight-max)
+	  (let ((total-values (apply + (map cdr n))))
+	   (if (> total-values (car r))
+	    (cons total-values n)
+	    r))
+	  r))
+	'(0 . ())
+	(power-set-stream items))))
+ (display "\tweight\tprice")
+ (newline)
+ (for-each
+  (lambda (x)
+   (display "\t")
+   (display (car x))
+   (display "\t")
+   (display (cdr x))
+   (newline))
+  (cdr res))
+ (display "total\t")
+ (display (apply + (map car (cdr res))))
+ (display "\t")
+ (display (car res))
+ (newline))
+;        weight  price
+;        5       17
+;        9       33
+;        8       15
+;        17      39
+;        12      37
+;        11      28
+;        7       24
+;        15      42
+;        16      45
+;total   100     280
+
