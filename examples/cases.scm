@@ -24,6 +24,16 @@
 ;0 2 4 8
 (newline)
 
+(for-each
+ (lambda (x)
+  (display (stream-first-cond (lambda (n) (zero? (remainder n 10))) x 'failed))
+  (newline))
+ (list
+  (list->stream '(15 20 25 30 35 40))
+  (list->stream '(1 2 3 4 5 6 7))))
+;20
+;fialed
+
 (display
  (fold-stream
   (lambda (n r) (+ n (* r 10)))

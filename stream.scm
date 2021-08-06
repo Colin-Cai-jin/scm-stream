@@ -57,6 +57,16 @@
       '()
       (cons (stream-car stream) (stream->list (stream-cdr stream)))))
 
+;Find the first element that is suted for the condition of 'pass?'
+;If no one is suted for the confition, the function returns 'failed-return'
+(define (stream-first-cond pass? stream failed-return)
+ (if (null-stream? stream)
+  failed-return
+  (let ((x (stream-car stream)))
+   (if (pass? x)
+    x
+    (stream-first-cond pass? (stream-cdr stream) failed-return)))))
+
 ;Just like `fold-left', except that the object is not a list, it is a stream
 (define (fold-stream f init stream)
   (if (null-stream? stream)
