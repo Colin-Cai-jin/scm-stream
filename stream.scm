@@ -172,6 +172,17 @@
      (flat-stream (stream-cons (cdr x) (stream-cdr stream))))))))
 
 ;If a stream is made up of lists or stream, this function splits each list/stream and assembles them into a new stream
+;There are bugs in this function, but I don't know how to solve it.
+;Consider the following:
+;(for-each-stream
+; display
+; (flat-stream-common
+;  (stream-cons (make-inf-stream 0 not) (make-empty-stream))))
+;It has the same action as the following:
+;(for-each-stream
+; display
+; (make-inf-stream 0 not))
+;But the memory using of the first one becomes more and more while running
 (define (flat-stream-common stream-list/stream-stream)
  (if (null-stream? stream-list/stream-stream)
   (make-empty-stream)
